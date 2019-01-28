@@ -50,6 +50,10 @@ if [ ${#repos_map[@]} -gt 0 ]; then
 fi
 
 function should_use_colors() {
+	if [[ ! -t 1 ]]; then
+		return 1 # not a terminal, for example pager
+	fi
+
 	case "${TERM}" in
 	xterm-color | *-256color) return 0 ;;
 	esac
