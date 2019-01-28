@@ -1,30 +1,31 @@
-.DEFAULT_GOAL := test
-
+fixtures := .fixtures
+local := $(fixtures)/local
+remote := $(fixtures)/remote
 repos := \
-	./local/loose \
-	./local/loose-no-commits \
-	./local/loose-no-commits-unstaged-file \
-	./local/loose-no-commits-staged-file \
-	./local/up-to-date
+	$(local)/loose \
+	$(local)/loose-no-commits \
+	$(local)/loose-no-commits-unstaged-file \
+	$(local)/loose-no-commits-staged-file \
+	$(local)/up-to-date
 
-.PHONY: clean test
+.PHONY: clean sample
 
 clean:
-	@rm -rf ./local ./remote
+	@rm -rf $(local) $(remote)
 
-test: clean $(repos)
-	@$(CURDIR)/../gsr
+sample: clean $(repos)
+	@cd $(fixtures) && $(CURDIR)/gsr
 
-./local:
-./remote:
+$(local):
+$(remote):
 	@mkdir -p "$@"
 
-./remote/%: ./remote
+$(remote)/%: $(remote)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet --bare
 
-./local/loose: ./local
+$(local)/loose: $(local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -33,20 +34,20 @@ test: clean $(repos)
 		&& git add README.md \
 		&& git commit --quiet -m 'Initial commit'
 
-./local/loose-no-commits: ./local
+$(local)/loose-no-commits: $(local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
 		&& git config commit.gpgsign false \
 
-./local/loose-no-commits-unstaged-file: ./local
+$(local)/loose-no-commits-unstaged-file: $(local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
 		&& git config commit.gpgsign false \
 		&& echo 'This repository should be loose' > README.md
 
-./local/loose-no-commits-staged-file: ./local
+$(local)/loose-no-commits-staged-file: $(local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -56,7 +57,7 @@ test: clean $(repos)
 
 .SECONDEXPANSION:
 
-./local/up-to-date: ./remote/$$(@F) ./local
+$(local)/up-to-date: $(remote)/$$(@F) $(local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
