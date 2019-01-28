@@ -5,7 +5,7 @@ if ((${BASH_VERSION%%.*} < 4)); then
 	exit 1
 fi
 
-set -e
+set -eu
 
 readonly SIGN_NONE=' '
 readonly SIGN_LOOSE='L'
