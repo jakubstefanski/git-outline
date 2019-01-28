@@ -2,17 +2,17 @@
 
 set -e
 
-loose=()
-totalRepos=0
+repos_all=()
+repos_loose=()
 
 while IFS= read -r -d '' gitconfig; do
 	repo=$(dirname "$(dirname "${gitconfig}")")
 
-	if [[ ! $(cd ${repo} && git remote) ]]; then
-		loose+=("${repo}")
+	if [[ ! $(cd "${repo}" && git remote 2>/dev/null) ]]; then
+		repos_loose+=("${repo}")
 	fi
 
-	totalRepos=$((totalRepos + 1))
+	repos_all+=("${repo}")
 done < <(find . -type f -path '*/.git/config' -print0 | sort -z)
 
 function use_colors() {
@@ -35,18 +35,10 @@ if use_colors; then
 	reset='\e[0m'
 fi
 
-print_group() {
-	local label="${1}"
-	local color="${2}"
-	shift 2
-	local repos=("${@}")
-
-	if [ ${#repos[@]} -gt 0 ]; then
-		echo -e "${label}:\n"
-		printf "\t${color}%s${reset}\n" "${repos[@]}"
+echo -e "Found ${#repos_all[@]} repositories\n"
+if [ ${#repos_loose[@]} -gt 0 ]; then
+		echo "Loose repositories:"
+		echo -e '  (use "cd <dir> && git remote add origin <url>" to add remote repository)\n'
+		printf "\t${red}%s${reset}\n" "${repos_loose[@]}"
 		echo
-	fi
-}
-
-echo "Found ${totalRepos} repositories"
-print_group 'Loose repositories' "${red}" "${loose[@]}"
+fi
