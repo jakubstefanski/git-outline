@@ -1,27 +1,53 @@
 #!/bin/bash
 
+if ((${BASH_VERSION%%.*} < 4)); then
+	echo "${0} requires Bash version 4 or later" >&2
+	exit 1
+fi
+
 set -e
 
-repos_all=()
-repos_loose=()
-repos_dirty=()
-repos_remote_unavailable=()
+readonly SIGN_NONE=' '
+readonly SIGN_LOOSE='L'
+readonly SIGN_DIRTY='D'
+readonly SIGN_REMOTE_UNAVAILABLE='R'
+readonly PORCELAIN_STATUS_LENGTH=6
 
+function check_status() {
+	local repo="${1}"
+	local status=()
+
+	# Loose repositories
+	[[ ! $(git remote 2>/dev/null) ]] && status+=("${SIGN_LOOSE}")
+
+	# Dirty repositories
+	[[ $(git status --porcelain) ]] && status+=("${SIGN_DIRTY}")
+
+	# Remote unavailable
+	! git fetch --quiet &>/dev/null && status+=("${SIGN_REMOTE_UNAVAILABLE}")
+
+	# Padding and space for future extensions without breaking porcelain
+	while [ "${#status[@]}" -lt "${PORCELAIN_STATUS_LENGTH}" ]; do
+		status+=("${SIGN_NONE}")
+	done
+
+	printf '%s' "${status[@]}"
+}
+
+# Map (name => porcelain status)
+declare -A repos_map
 while IFS= read -r -d '' gitconfig; do
 	repo=$(dirname "$(dirname "${gitconfig}")")
+	repos_map["${repo}"]="$(cd "${repo}" && check_status "${repo}")"
+done < <(find . -type f -path '*/.git/config' -print0)
 
-	if [[ ! $(cd "${repo}" && git remote 2>/dev/null) ]]; then
-		repos_loose+=("${repo}")
-	elif [[ $(cd "${repo}" && git status --porcelain) ]]; then
-		repos_dirty+=("${repo}")
-	elif (cd "${repo}" && ! git fetch --quiet &>/dev/null); then
-		repos_remote_unavailable+=("${repo}")
-	fi
+# Sorted repos for pretty and consistent output
+repos_sorted=()
+while IFS= read -rd '' repo; do
+	repos_sorted+=("${repo}")
+done < <(printf '%s\0' "${!repos_map[@]}" | sort -z)
 
-	repos_all+=("${repo}")
-done < <(find . -type f -path '*/.git/config' -print0 | sort -z)
-
-function use_colors() {
+function should_use_colors() {
 	case "${TERM}" in
 	xterm-color | *-256color) return 0 ;;
 	esac
@@ -36,30 +62,11 @@ function use_colors() {
 red=''
 reset=''
 
-if use_colors; then
+if should_use_colors; then
 	red='\e[0;31m'
 	reset='\e[0m'
 fi
 
-echo -e "Found ${#repos_all[@]} repositories\n"
-
-if [ ${#repos_remote_unavailable[@]} -gt 0 ]; then
-	echo "Remote unavailable:"
-	echo -e '  (use "cd <dir> && git fetch" to retry)\n'
-	printf "\t${red}%s${reset}\n" "${repos_remote_unavailable[@]}"
-	echo
-fi
-
-if [ ${#repos_dirty[@]} -gt 0 ]; then
-	echo "Dirty repositories:"
-	echo -e '  (use "cd <dir> && git commit" to commit changes)\n'
-	printf "\t${red}%s${reset}\n" "${repos_dirty[@]}"
-	echo
-fi
-
-if [ ${#repos_loose[@]} -gt 0 ]; then
-	echo "Loose repositories:"
-	echo -e '  (use "cd <dir> && git remote add origin <url>" to add remote repository)\n'
-	printf "\t${red}%s${reset}\n" "${repos_loose[@]}"
-	echo
-fi
+for repo in "${repos_sorted[@]}"; do
+	echo -e "${red}${repos_map[${repo}]}${reset} ${repo}"
+done
