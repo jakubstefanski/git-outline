@@ -42,7 +42,7 @@ while IFS= read -rd '' gitconfig; do
 done < <(find . -type f -path '*/.git/config' -print0)
 
 # Sorted repos for pretty and consistent output
-repos_sorted=()
+declare -a repos_sorted
 if [ ${#repos_map[@]} -gt 0 ]; then
 	while IFS= read -rd '' repo; do
 		repos_sorted+=("${repo}")
@@ -65,8 +65,8 @@ function should_use_colors() {
 	return 1
 }
 
-red=''
-reset=''
+declare red=''
+declare reset=''
 
 if should_use_colors; then
 	red='\e[0;31m'
