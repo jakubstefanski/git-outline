@@ -5,6 +5,7 @@ set -e
 repos_all=()
 repos_loose=()
 repos_dirty=()
+repos_remote_unavailable=()
 
 while IFS= read -r -d '' gitconfig; do
 	repo=$(dirname "$(dirname "${gitconfig}")")
@@ -13,6 +14,8 @@ while IFS= read -r -d '' gitconfig; do
 		repos_loose+=("${repo}")
 	elif [[ $(cd "${repo}" && git status --porcelain) ]]; then
 		repos_dirty+=("${repo}")
+	elif (cd "${repo}" && ! git fetch --quiet &>/dev/null); then
+		repos_remote_unavailable+=("${repo}")
 	fi
 
 	repos_all+=("${repo}")
@@ -40,16 +43,23 @@ fi
 
 echo -e "Found ${#repos_all[@]} repositories\n"
 
+if [ ${#repos_remote_unavailable[@]} -gt 0 ]; then
+	echo "Remote unavailable:"
+	echo -e '  (use "cd <dir> && git fetch" to retry)\n'
+	printf "\t${red}%s${reset}\n" "${repos_remote_unavailable[@]}"
+	echo
+fi
+
 if [ ${#repos_dirty[@]} -gt 0 ]; then
-		echo "Dirty repositories:"
-		echo -e '  (use "cd <dir> && git commit" to commit changes)\n'
-		printf "\t${red}%s${reset}\n" "${repos_dirty[@]}"
-		echo
+	echo "Dirty repositories:"
+	echo -e '  (use "cd <dir> && git commit" to commit changes)\n'
+	printf "\t${red}%s${reset}\n" "${repos_dirty[@]}"
+	echo
 fi
 
 if [ ${#repos_loose[@]} -gt 0 ]; then
-		echo "Loose repositories:"
-		echo -e '  (use "cd <dir> && git remote add origin <url>" to add remote repository)\n'
-		printf "\t${red}%s${reset}\n" "${repos_loose[@]}"
-		echo
+	echo "Loose repositories:"
+	echo -e '  (use "cd <dir> && git remote add origin <url>" to add remote repository)\n'
+	printf "\t${red}%s${reset}\n" "${repos_loose[@]}"
+	echo
 fi

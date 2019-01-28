@@ -12,6 +12,7 @@ repos := \
 	$(local)/dirty-commits-staged \
 	$(local)/dirty-no-commits-unstaged \
 	$(local)/dirty-no-commits-staged \
+	$(local)/remote-unavailable \
 	$(local)/up-to-date
 
 .PHONY: clean sample
@@ -123,6 +124,19 @@ $(local)/dirty-commits-staged: $(remote)/$$(@F) $(local)
 		&& git commit --quiet -m 'Initial commit' \
 		&& echo "$@ - dirty" > README.md \
 		&& git add README.md
+
+$(local)/remote-unavailable: $(remote)/$$(@F) $(local)
+	@mkdir -p "$@" \
+		&& cd "$@" \
+		&& git init --quiet \
+		&& git config commit.gpgsign false \
+		&& git remote add origin $(CURDIR)/$< \
+		&& echo "$@" > README.md \
+		&& git add README.md \
+		&& git commit --quiet -m 'Initial commit' \
+		&& git push --quiet origin master \
+		&& git branch --quiet --set-upstream-to origin/master \
+		&& rm -rf $(CURDIR)/$<
 
 $(local)/up-to-date: $(remote)/$$(@F) $(local)
 	@mkdir -p "$@" \
