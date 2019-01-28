@@ -1,0 +1,49 @@
+#!/bin/bash
+
+set -e
+
+loose=()
+
+while IFS= read -r -d '' gitconfig; do
+	repo=$(dirname "$(dirname "${gitconfig}")")
+
+	if ! grep -q '\[remote[[:space:]]\+"origin"\]' "${gitconfig}"; then
+		loose+=("${repo}")
+	fi
+
+done < <(find . -type f -path '*/.git/config' -print0)
+
+function use_colors() {
+	case "${TERM}" in
+	xterm-color | *-256color) return 0 ;;
+	esac
+
+	if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+		return 0
+	fi
+
+	echo return 1
+}
+
+red=''
+reset=''
+
+if use_colors; then
+	red='\e[0;31m'
+	reset='\e[0m'
+fi
+
+print_group() {
+	local label="${1}"
+	local color="${2}"
+	shift 2
+	local repos=("${@}")
+
+	if [ ${#repos[@]} -gt 0 ]; then
+		echo -e "${label}:\n"
+		printf "${color}%s${reset}\n" "${repos[@]}"
+		echo
+	fi
+}
+
+print_group 'Loose repositories' "${red}" "${loose[@]}"
