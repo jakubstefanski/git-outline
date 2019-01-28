@@ -4,12 +4,15 @@ set -e
 
 repos_all=()
 repos_loose=()
+repos_dirty=()
 
 while IFS= read -r -d '' gitconfig; do
 	repo=$(dirname "$(dirname "${gitconfig}")")
 
 	if [[ ! $(cd "${repo}" && git remote 2>/dev/null) ]]; then
 		repos_loose+=("${repo}")
+	elif [[ $(cd "${repo}" && git status --porcelain) ]]; then
+		repos_dirty+=("${repo}")
 	fi
 
 	repos_all+=("${repo}")
@@ -36,6 +39,14 @@ if use_colors; then
 fi
 
 echo -e "Found ${#repos_all[@]} repositories\n"
+
+if [ ${#repos_dirty[@]} -gt 0 ]; then
+		echo "Dirty repositories:"
+		echo -e '  (use "cd <dir> && git commit" to commit changes)\n'
+		printf "\t${red}%s${reset}\n" "${repos_dirty[@]}"
+		echo
+fi
+
 if [ ${#repos_loose[@]} -gt 0 ]; then
 		echo "Loose repositories:"
 		echo -e '  (use "cd <dir> && git remote add origin <url>" to add remote repository)\n'

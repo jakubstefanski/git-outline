@@ -8,6 +8,10 @@ repos := \
 	$(local)/loose-no-commits \
 	$(local)/loose-no-commits-unstaged-file \
 	$(local)/loose-no-commits-staged-file \
+	$(local)/dirty-commits-unstaged \
+	$(local)/dirty-commits-staged \
+	$(local)/dirty-no-commits-unstaged \
+	$(local)/dirty-no-commits-staged \
 	$(local)/up-to-date
 
 .PHONY: clean sample
@@ -68,7 +72,7 @@ $(local)/loose-no-commits-unstaged-file: $(local)
 		&& cd "$@" \
 		&& git init --quiet \
 		&& git config commit.gpgsign false \
-		&& echo 'This repository should be loose' > README.md
+		&& echo "$@" > README.md
 
 $(local)/loose-no-commits-staged-file: $(local)
 	@mkdir -p "$@" \
@@ -79,6 +83,46 @@ $(local)/loose-no-commits-staged-file: $(local)
 		&& git add README.md
 
 .SECONDEXPANSION:
+
+$(local)/dirty-no-commits-unstaged: $(remote)/$$(@F) $(local)
+	@mkdir -p "$@" \
+		&& cd "$@" \
+		&& git init --quiet \
+		&& git config commit.gpgsign false \
+		&& git remote add origin $(CURDIR)/$< \
+		&& echo "$@" > README.md
+
+$(local)/dirty-no-commits-staged: $(remote)/$$(@F) $(local)
+	@mkdir -p "$@" \
+		&& cd "$@" \
+		&& git init --quiet \
+		&& git config commit.gpgsign false \
+		&& git remote add origin $(CURDIR)/$< \
+		&& echo "$@" > README.md \
+		&& git add README.md
+
+$(local)/dirty-commits-unstaged: $(remote)/$$(@F) $(local)
+	@mkdir -p "$@" \
+		&& cd "$@" \
+		&& git init --quiet \
+		&& git config commit.gpgsign false \
+		&& git remote add origin $(CURDIR)/$< \
+		&& echo "$@" > README.md \
+		&& git add README.md \
+		&& git commit --quiet -m 'Initial commit' \
+		&& echo "$@ - dirty" > README.md
+
+$(local)/dirty-commits-staged: $(remote)/$$(@F) $(local)
+	@mkdir -p "$@" \
+		&& cd "$@" \
+		&& git init --quiet \
+		&& git config commit.gpgsign false \
+		&& git remote add origin $(CURDIR)/$< \
+		&& echo "$@" > README.md \
+		&& git add README.md \
+		&& git commit --quiet -m 'Initial commit' \
+		&& echo "$@ - dirty" > README.md \
+		&& git add README.md
 
 $(local)/up-to-date: $(remote)/$$(@F) $(local)
 	@mkdir -p "$@" \
