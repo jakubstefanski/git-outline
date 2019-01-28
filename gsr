@@ -8,7 +8,7 @@ totalRepos=0
 while IFS= read -r -d '' gitconfig; do
 	repo=$(dirname "$(dirname "${gitconfig}")")
 
-	if ! grep -q '\[remote[[:space:]]\+"origin"\]' "${gitconfig}"; then
+	if [[ ! $(cd ${repo} && git remote) ]]; then
 		loose+=("${repo}")
 	fi
 
