@@ -36,16 +36,18 @@ function check_status() {
 
 # Map (name => porcelain status)
 declare -A repos_map
-while IFS= read -r -d '' gitconfig; do
+while IFS= read -rd '' gitconfig; do
 	repo=$(dirname "$(dirname "${gitconfig}")")
 	repos_map["${repo}"]="$(cd "${repo}" && check_status "${repo}")"
 done < <(find . -type f -path '*/.git/config' -print0)
 
 # Sorted repos for pretty and consistent output
 repos_sorted=()
-while IFS= read -rd '' repo; do
-	repos_sorted+=("${repo}")
-done < <(printf '%s\0' "${!repos_map[@]}" | sort -z)
+if [ ${#repos_map[@]} -gt 0 ]; then
+	while IFS= read -rd '' repo; do
+		repos_sorted+=("${repo}")
+	done < <(printf '%s\0' "${!repos_map[@]}" | sort -z)
+fi
 
 function should_use_colors() {
 	case "${TERM}" in
@@ -56,7 +58,7 @@ function should_use_colors() {
 		return 0
 	fi
 
-	echo return 1
+	return 1
 }
 
 red=''
