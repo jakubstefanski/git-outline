@@ -3,6 +3,7 @@
 set -e
 
 loose=()
+totalRepos=0
 
 while IFS= read -r -d '' gitconfig; do
 	repo=$(dirname "$(dirname "${gitconfig}")")
@@ -11,6 +12,7 @@ while IFS= read -r -d '' gitconfig; do
 		loose+=("${repo}")
 	fi
 
+	totalRepos=$((totalRepos + 1))
 done < <(find . -type f -path '*/.git/config' -print0)
 
 function use_colors() {
@@ -46,4 +48,5 @@ print_group() {
 	fi
 }
 
+echo "Found ${totalRepos} repositories"
 print_group 'Loose repositories' "${red}" "${loose[@]}"
