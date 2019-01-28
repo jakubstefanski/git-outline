@@ -2,7 +2,9 @@ fixtures := .fixtures
 local := $(fixtures)/local
 remote := $(fixtures)/remote
 repos := \
-	$(local)/loose \
+	$(local)/loose-commits \
+	$(local)/loose-commits-unstaged-file \
+	$(local)/loose-commits-staged-file \
 	$(local)/loose-no-commits \
 	$(local)/loose-no-commits-unstaged-file \
 	$(local)/loose-no-commits-staged-file \
@@ -25,14 +27,35 @@ $(remote)/%: $(remote)
 		&& cd "$@" \
 		&& git init --quiet --bare
 
-$(local)/loose: $(local)
+$(local)/loose-commits: $(local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
 		&& git config commit.gpgsign false \
-		&& echo 'This repository should be loose' > README.md \
+		&& echo "$@" > README.md \
 		&& git add README.md \
 		&& git commit --quiet -m 'Initial commit'
+
+$(local)/loose-commits-unstaged-file: $(local)
+	@mkdir -p "$@" \
+		&& cd "$@" \
+		&& git init --quiet \
+		&& git config commit.gpgsign false \
+		&& echo "$@" > README.md \
+		&& git add README.md \
+		&& git commit --quiet -m 'Initial commit' \
+		&& echo "$@ - dirty" > README.md
+
+$(local)/loose-commits-staged-file: $(local)
+	@mkdir -p "$@" \
+		&& cd "$@" \
+		&& git init --quiet \
+		&& git config commit.gpgsign false \
+		&& echo "$@" > README.md \
+		&& git add README.md \
+		&& git commit --quiet -m 'Initial commit' \
+		&& echo "$@ - dirty" > README.md \
+		&& git add README.md
 
 $(local)/loose-no-commits: $(local)
 	@mkdir -p "$@" \
@@ -52,7 +75,7 @@ $(local)/loose-no-commits-staged-file: $(local)
 		&& cd "$@" \
 		&& git init --quiet \
 		&& git config commit.gpgsign false \
-		&& echo 'This repository should be loose' > README.md \
+		&& echo "$@" > README.md \
 		&& git add README.md
 
 .SECONDEXPANSION:
@@ -63,7 +86,7 @@ $(local)/up-to-date: $(remote)/$$(@F) $(local)
 		&& git init --quiet \
 		&& git config commit.gpgsign false \
 		&& git remote add origin $(CURDIR)/$< \
-		&& echo 'This repository should be up to date' > README.md \
+		&& echo "$@" > README.md \
 		&& git add README.md \
 		&& git commit --quiet -m 'Initial commit' \
 		&& git push --quiet origin master \
