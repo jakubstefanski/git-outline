@@ -43,7 +43,7 @@ print_group() {
 
 	if [ ${#repos[@]} -gt 0 ]; then
 		echo -e "${label}:\n"
-		printf "${color}%s${reset}\n" "${repos[@]}"
+		printf "\t${color}%s${reset}\n" "${repos[@]}"
 		echo
 	fi
 }
