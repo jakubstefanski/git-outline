@@ -74,5 +74,8 @@ if should_use_colors; then
 fi
 
 for repo in "${repos_sorted[@]}"; do
-	echo -e "${red}${repos_map[${repo}]}${reset} ${repo}"
+	declare porcelain="${repos_map[${repo}]}"
+	if [[ ! -z "${porcelain// /}" ]]; then
+		echo -e "${red}${porcelain}${reset} ${repo}"
+	fi
 done
