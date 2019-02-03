@@ -17,42 +17,50 @@ readonly PORCELAIN_STATUS_LENGTH=6
 
 function check_status() {
 	local repo="${1}"
-	local status=()
+	local porcelain=()
 	local local_branch=''
 	local remote_branch=''
 
 	# Loose repositories
 	if [[ ! $(git remote 2>/dev/null) ]]; then
-		status+=("${SIGN_LOOSE}")
+		porcelain+=("${SIGN_LOOSE}")
 	fi
 
 	# Dirty repositories
 	if [[ $(git status --porcelain) ]]; then
-		status+=("${SIGN_DIRTY}")
+		porcelain+=("${SIGN_DIRTY}")
 	fi
 
 	# Remote unavailable
 	if ! git fetch --quiet &>/dev/null; then
-		status+=("${SIGN_REMOTE_UNAVAILABLE}")
+		porcelain+=("${SIGN_REMOTE_UNAVAILABLE}")
 	fi
 
 	local_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 	remote_branch=$(git rev-parse --abbrev-ref --symbolic-full-name @\{u\} 2>/dev/null)
 	if [[ "${remote_branch}" ]]; then
 		if [ "$(git rev-list "${remote_branch}..${local_branch}" --count)" -gt '0' ]; then
-			status+=("${SIGN_AHEAD}")
+			porcelain+=("${SIGN_AHEAD}")
 		fi
 		if [ "$(git rev-list "${local_branch}..${remote_branch}" --count)" -gt '0' ]; then
-			status+=("${SIGN_BEHIND}")
+			porcelain+=("${SIGN_BEHIND}")
 		fi
 	fi
 
 	# Padding and space for future extensions without breaking porcelain
-	while [ "${#status[@]}" -lt "${PORCELAIN_STATUS_LENGTH}" ]; do
-		status+=("${SIGN_NONE}")
+	while [ "${#porcelain[@]}" -lt "${PORCELAIN_STATUS_LENGTH}" ]; do
+		porcelain+=("${SIGN_NONE}")
 	done
 
-	printf '%s' "${status[@]}"
+	printf '%s' "${porcelain[@]}"
+}
+
+function check_branch() {
+	local repo="${1}"
+	local local_branch=''
+
+	local_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+	printf '%s' "${local_branch}"
 }
 
 function should_use_colors() {
@@ -72,11 +80,13 @@ function should_use_colors() {
 }
 
 function main() {
-	# Map (repo => porcelain status)
+	# Map (repo => porcelain) and (repo => branch)
 	declare -A statuses
+	declare -A branches
 	while IFS= read -rd '' gitconfig; do
 		repo=$(dirname "$(dirname "${gitconfig}")")
 		statuses["${repo}"]="$(cd "${repo}" && check_status "${repo}")"
+		branches["${repo}"]="$(cd "${repo}" && check_branch "${repo}")"
 	done < <(find . -type f -path '*/.git/config' -print0)
 
 	# Sorted repos for pretty and consistent output
@@ -89,17 +99,20 @@ function main() {
 
 	# Print summary
 	local red=''
+	local green=''
 	local reset=''
 
 	if should_use_colors; then
 		red='\e[0;31m'
+		green='\e[0;32m'
 		reset='\e[0m'
 	fi
 
 	for repo in "${repos[@]}"; do
-		local porcelain="${statuses[${repo}]}"
-		if [[ ! -z "${porcelain// /}" ]]; then
-			echo -e "${red}${porcelain}${reset} ${repo}"
+		local status="${statuses[${repo}]}"
+		local branch="${branches[${repo}]}"
+		if [[ ! -z "${status// /}" ]]; then
+			echo -e "${red}${status}${reset} ${repo} [${green}${branch}${reset}]"
 		fi
 	done
 }
