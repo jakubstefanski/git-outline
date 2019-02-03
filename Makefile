@@ -24,7 +24,7 @@ clean:
 	@rm -rf $(local) $(remote)
 
 sample: clean $(repos)
-	@cd $(fixtures) && $(CURDIR)/gsr
+	@cd $(fixtures) && $(CURDIR)/gsr --fetch
 
 $(local):
 $(remote):
