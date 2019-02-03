@@ -11,20 +11,41 @@ readonly SIGN_NONE=' '
 readonly SIGN_LOOSE='L'
 readonly SIGN_DIRTY='D'
 readonly SIGN_REMOTE_UNAVAILABLE='R'
+readonly SIGN_BEHIND='B'
+readonly SIGN_AHEAD='A'
 readonly PORCELAIN_STATUS_LENGTH=6
 
 function check_status() {
 	local repo="${1}"
 	local status=()
+	local local_branch=''
+	local remote_branch=''
 
 	# Loose repositories
-	[[ ! $(git remote 2>/dev/null) ]] && status+=("${SIGN_LOOSE}")
+	if [[ ! $(git remote 2>/dev/null) ]]; then
+		status+=("${SIGN_LOOSE}")
+	fi
 
 	# Dirty repositories
-	[[ $(git status --porcelain) ]] && status+=("${SIGN_DIRTY}")
+	if [[ $(git status --porcelain) ]]; then
+		status+=("${SIGN_DIRTY}")
+	fi
 
 	# Remote unavailable
-	! git fetch --quiet &>/dev/null && status+=("${SIGN_REMOTE_UNAVAILABLE}")
+	if ! git fetch --quiet &>/dev/null; then
+		status+=("${SIGN_REMOTE_UNAVAILABLE}")
+	fi
+
+	local_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+	remote_branch=$(git rev-parse --abbrev-ref --symbolic-full-name @\{u\} 2>/dev/null)
+	if [[ "${remote_branch}" ]]; then
+		if [ "$(git rev-list "${remote_branch}..${local_branch}" --count)" -gt '0' ]; then
+			status+=("${SIGN_AHEAD}")
+		fi
+		if [ "$(git rev-list "${local_branch}..${remote_branch}" --count)" -gt '0' ]; then
+			status+=("${SIGN_BEHIND}")
+		fi
+	fi
 
 	# Padding and space for future extensions without breaking porcelain
 	while [ "${#status[@]}" -lt "${PORCELAIN_STATUS_LENGTH}" ]; do
