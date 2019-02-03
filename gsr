@@ -55,21 +55,6 @@ function check_status() {
 	printf '%s' "${status[@]}"
 }
 
-# Map (name => porcelain status)
-declare -A repos_map
-while IFS= read -rd '' gitconfig; do
-	repo=$(dirname "$(dirname "${gitconfig}")")
-	repos_map["${repo}"]="$(cd "${repo}" && check_status "${repo}")"
-done < <(find . -type f -path '*/.git/config' -print0)
-
-# Sorted repos for pretty and consistent output
-declare -a repos_sorted
-if [ ${#repos_map[@]} -gt 0 ]; then
-	while IFS= read -rd '' repo; do
-		repos_sorted+=("${repo}")
-	done < <(printf '%s\0' "${!repos_map[@]}" | sort -z)
-fi
-
 function should_use_colors() {
 	if [[ ! -t 1 ]]; then
 		return 1 # not a terminal, for example pager
@@ -86,17 +71,37 @@ function should_use_colors() {
 	return 1
 }
 
-declare red=''
-declare reset=''
+function main() {
+	# Map (repo => porcelain status)
+	declare -A statuses
+	while IFS= read -rd '' gitconfig; do
+		repo=$(dirname "$(dirname "${gitconfig}")")
+		statuses["${repo}"]="$(cd "${repo}" && check_status "${repo}")"
+	done < <(find . -type f -path '*/.git/config' -print0)
 
-if should_use_colors; then
-	red='\e[0;31m'
-	reset='\e[0m'
-fi
-
-for repo in "${repos_sorted[@]}"; do
-	declare porcelain="${repos_map[${repo}]}"
-	if [[ ! -z "${porcelain// /}" ]]; then
-		echo -e "${red}${porcelain}${reset} ${repo}"
+	# Sorted repos for pretty and consistent output
+	declare -a repos
+	if [ ${#statuses[@]} -gt 0 ]; then
+		while IFS= read -rd '' repo; do
+			repos+=("${repo}")
+		done < <(printf '%s\0' "${!statuses[@]}" | sort -z)
 	fi
-done
+
+	# Print summary
+	local red=''
+	local reset=''
+
+	if should_use_colors; then
+		red='\e[0;31m'
+		reset='\e[0m'
+	fi
+
+	for repo in "${repos[@]}"; do
+		local porcelain="${statuses[${repo}]}"
+		if [[ ! -z "${porcelain// /}" ]]; then
+			echo -e "${red}${porcelain}${reset} ${repo}"
+		fi
+	done
+}
+
+main
