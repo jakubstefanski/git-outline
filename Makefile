@@ -1,41 +1,41 @@
 fixtures := .fixtures
-local := $(fixtures)/local
-remote := $(fixtures)/remote
-repos := \
-	$(local)/loose-commits \
-	$(local)/loose-commits-unstaged-file \
-	$(local)/loose-commits-staged-file \
-	$(local)/loose-no-commits \
-	$(local)/loose-no-commits-unstaged-file \
-	$(local)/loose-no-commits-staged-file \
-	$(local)/dirty-commits-unstaged \
-	$(local)/dirty-commits-staged \
-	$(local)/dirty-no-commits-unstaged \
-	$(local)/dirty-no-commits-staged \
-	$(local)/remote-unavailable \
-	$(local)/ahead \
-	$(local)/behind \
-	$(local)/ahead-behind-conflict \
-	$(local)/up-to-date
+fixture_local := $(fixtures)/local
+fixture_remote := $(fixtures)/remote
+fixture_repos := \
+	$(fixture_local)/loose-commits \
+	$(fixture_local)/loose-commits-unstaged-file \
+	$(fixture_local)/loose-commits-staged-file \
+	$(fixture_local)/loose-no-commits \
+	$(fixture_local)/loose-no-commits-unstaged-file \
+	$(fixture_local)/loose-no-commits-staged-file \
+	$(fixture_local)/dirty-commits-unstaged \
+	$(fixture_local)/dirty-commits-staged \
+	$(fixture_local)/dirty-no-commits-unstaged \
+	$(fixture_local)/dirty-no-commits-staged \
+	$(fixture_local)/remote-unavailable \
+	$(fixture_local)/ahead \
+	$(fixture_local)/behind \
+	$(fixture_local)/ahead-behind-conflict \
+	$(fixture_local)/up-to-date
 
 .PHONY: clean sample
 
 clean:
-	@rm -rf $(local) $(remote)
+	@rm -rf $(fixture_local) $(fixture_remote)
 
-sample: clean $(repos)
+sample: clean $(fixture_repos)
 	@cd $(fixtures) && $(CURDIR)/gsr --fetch
 
-$(local):
-$(remote):
+$(fixture_local):
+$(fixture_remote):
 	@mkdir -p "$@"
 
-$(remote)/%: $(remote)
+$(fixture_remote)/%: $(fixture_remote)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet --bare
 
-$(local)/loose-commits: $(local)
+$(fixture_local)/loose-commits: $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -44,7 +44,7 @@ $(local)/loose-commits: $(local)
 		&& git add README.md \
 		&& git commit --quiet -m 'Initial commit'
 
-$(local)/loose-commits-unstaged-file: $(local)
+$(fixture_local)/loose-commits-unstaged-file: $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -54,7 +54,7 @@ $(local)/loose-commits-unstaged-file: $(local)
 		&& git commit --quiet -m 'Initial commit' \
 		&& echo "$@ - dirty" > README.md
 
-$(local)/loose-commits-staged-file: $(local)
+$(fixture_local)/loose-commits-staged-file: $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -65,20 +65,20 @@ $(local)/loose-commits-staged-file: $(local)
 		&& echo "$@ - dirty" > README.md \
 		&& git add README.md
 
-$(local)/loose-no-commits: $(local)
+$(fixture_local)/loose-no-commits: $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
 		&& git config commit.gpgsign false \
 
-$(local)/loose-no-commits-unstaged-file: $(local)
+$(fixture_local)/loose-no-commits-unstaged-file: $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
 		&& git config commit.gpgsign false \
 		&& echo "$@" > README.md
 
-$(local)/loose-no-commits-staged-file: $(local)
+$(fixture_local)/loose-no-commits-staged-file: $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -88,7 +88,7 @@ $(local)/loose-no-commits-staged-file: $(local)
 
 .SECONDEXPANSION:
 
-$(local)/dirty-no-commits-unstaged: $(remote)/$$(@F) $(local)
+$(fixture_local)/dirty-no-commits-unstaged: $(fixture_remote)/$$(@F) $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -96,7 +96,7 @@ $(local)/dirty-no-commits-unstaged: $(remote)/$$(@F) $(local)
 		&& git remote add origin $(CURDIR)/$< \
 		&& echo "$@" > README.md
 
-$(local)/dirty-no-commits-staged: $(remote)/$$(@F) $(local)
+$(fixture_local)/dirty-no-commits-staged: $(fixture_remote)/$$(@F) $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -105,7 +105,7 @@ $(local)/dirty-no-commits-staged: $(remote)/$$(@F) $(local)
 		&& echo "$@" > README.md \
 		&& git add README.md
 
-$(local)/dirty-commits-unstaged: $(remote)/$$(@F) $(local)
+$(fixture_local)/dirty-commits-unstaged: $(fixture_remote)/$$(@F) $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -116,7 +116,7 @@ $(local)/dirty-commits-unstaged: $(remote)/$$(@F) $(local)
 		&& git commit --quiet -m 'Initial commit' \
 		&& echo "$@ - dirty" > README.md
 
-$(local)/dirty-commits-staged: $(remote)/$$(@F) $(local)
+$(fixture_local)/dirty-commits-staged: $(fixture_remote)/$$(@F) $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -128,7 +128,7 @@ $(local)/dirty-commits-staged: $(remote)/$$(@F) $(local)
 		&& echo "$@ - dirty" > README.md \
 		&& git add README.md
 
-$(local)/remote-unavailable: $(remote)/$$(@F) $(local)
+$(fixture_local)/remote-unavailable: $(fixture_remote)/$$(@F) $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -141,7 +141,7 @@ $(local)/remote-unavailable: $(remote)/$$(@F) $(local)
 		&& git branch --quiet --set-upstream-to origin/master \
 		&& rm -rf $(CURDIR)/$<
 
-$(local)/behind: $(remote)/$$(@F) $(local)
+$(fixture_local)/behind: $(fixture_remote)/$$(@F) $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -157,7 +157,7 @@ $(local)/behind: $(remote)/$$(@F) $(local)
 		&& git push --quiet \
 		&& git reset --quiet --hard HEAD^
 
-$(local)/ahead: $(remote)/$$(@F) $(local)
+$(fixture_local)/ahead: $(fixture_remote)/$$(@F) $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -171,7 +171,7 @@ $(local)/ahead: $(remote)/$$(@F) $(local)
 		&& echo "$@ - ahead" > README.md \
 		&& git commit --quiet -am "Go ahead but don't push"
 
-$(local)/ahead-behind-conflict: $(remote)/$$(@F) $(local)
+$(fixture_local)/ahead-behind-conflict: $(fixture_remote)/$$(@F) $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
@@ -189,7 +189,7 @@ $(local)/ahead-behind-conflict: $(remote)/$$(@F) $(local)
 		&& echo "$@ - conflict" > README.md \
 		&& git commit --quiet -am "Add commit locally and don't push"
 
-$(local)/up-to-date: $(remote)/$$(@F) $(local)
+$(fixture_local)/up-to-date: $(fixture_remote)/$$(@F) $(fixture_local)
 	@mkdir -p "$@" \
 		&& cd "$@" \
 		&& git init --quiet \
