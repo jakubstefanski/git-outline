@@ -136,7 +136,7 @@ function main() {
 
 	# Sorted repos for pretty and consistent output
 	declare -a repos
-	if [ ${#statuses[@]} -gt 0 ]; then
+	if [[ -v statuses[@] ]]; then
 		while IFS= read -rd '' repo; do
 			repos+=("${repo}")
 		done < <(printf '%s\0' "${!statuses[@]}" | sort -z)
