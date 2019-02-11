@@ -11,7 +11,7 @@ set -eu
 readonly SIGN_NONE=' '
 readonly SIGN_LOOSE='L'
 readonly SIGN_DIRTY='D'
-readonly SIGN_REMOTE_UNAVAILABLE='R'
+readonly SIGN_REMOTE_UNAVAILABLE='U'
 readonly SIGN_BEHIND='B'
 readonly SIGN_AHEAD='A'
 readonly PORCELAIN_STATUS_LENGTH=6
