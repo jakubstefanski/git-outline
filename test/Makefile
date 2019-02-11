@@ -2,20 +2,20 @@ include common.mk
 
 .DEFAULT_GOAL := all
 
-testfiles := \
-	test-dirty.mk \
-	test-loose.mk \
-	test-remote-sync.mk
+testcases := \
+	dirty \
+	loose \
+	remote-sync
 
-.PHONY: all clean run run-fetch $(testfiles)
+.PHONY: all clean run run-fetch $(testcases)
 
 clean:
 	@rm -rf $(fixtures_local) $(fixtures_remote)
 
-all: $(testfiles)
+all: $(testcases)
 
-$(testfiles):
-	@$(MAKE) --no-print-directory -f "$@"
+$(testcases):
+	@$(MAKE) --no-print-directory -f "test-$@.mk"
 
 run:
 	@cd $(fixtures) && $(CURDIR)/../gsr
