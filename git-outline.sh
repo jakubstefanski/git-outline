@@ -14,6 +14,7 @@ readonly SIGN_DIRTY='D'
 readonly SIGN_REMOTE_UNAVAILABLE='U'
 readonly SIGN_BEHIND='B'
 readonly SIGN_AHEAD='A'
+readonly SIGN_EMPTY='E'
 readonly PORCELAIN_STATUS_LENGTH=6
 
 # Command options
@@ -58,19 +59,13 @@ function parse_args() {
 
 function check_status() {
 	local repo="$1"
-	local porcelain=()
+	local porcelain=() # result
+
 	local local_branch=''
 	local remote_branch=''
 
-	# Loose repositories
-	if [[ ! $(git remote 2>/dev/null) ]]; then
-		porcelain+=("${SIGN_LOOSE}")
-	fi
-
-	# Dirty repositories
-	if [[ $(git status --porcelain) ]]; then
-		porcelain+=("${SIGN_DIRTY}")
-	fi
+	local_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+	remote_branch=$(git rev-parse --abbrev-ref --symbolic-full-name @\{u\} 2>/dev/null)
 
 	# Remote unavailable
 	if ${opt_fetch}; then
@@ -79,14 +74,28 @@ function check_status() {
 		fi
 	fi
 
-	local_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-	remote_branch=$(git rev-parse --abbrev-ref --symbolic-full-name @\{u\} 2>/dev/null)
-	if [[ "${remote_branch}" ]]; then
-		if [ "$(git rev-list "${remote_branch}..${local_branch}" --count)" -gt '0' ]; then
-			porcelain+=("${SIGN_AHEAD}")
+	# Loose repositories
+	if [[ ! $(git remote 2>/dev/null) ]]; then
+		porcelain+=("${SIGN_LOOSE}")
+	fi
+
+	if ! git rev-parse --quiet --verify HEAD &>/dev/null; then
+		# Empty repository (no commits)
+		porcelain+=("${SIGN_EMPTY}")
+	else
+		# Dirty repository
+		if ! git diff-files --quiet --ignore-submodules || ! git diff-index --quiet --cached HEAD --ignore-submodules; then
+			porcelain+=("${SIGN_DIRTY}")
 		fi
-		if [ "$(git rev-list "${local_branch}..${remote_branch}" --count)" -gt '0' ]; then
-			porcelain+=("${SIGN_BEHIND}")
+
+		# Remote ahead/behind
+		if [[ "${remote_branch}" ]]; then
+			if [ "$(git rev-list "${remote_branch}..${local_branch}" --count)" -gt '0' ]; then
+				porcelain+=("${SIGN_AHEAD}")
+			fi
+			if [ "$(git rev-list "${local_branch}..${remote_branch}" --count)" -gt '0' ]; then
+				porcelain+=("${SIGN_BEHIND}")
+			fi
 		fi
 	fi
 

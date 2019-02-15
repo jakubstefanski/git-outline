@@ -18,7 +18,7 @@ $(testcases):
 	@$(MAKE) --no-print-directory -f "test-$@.mk"
 
 run:
-	@cd $(fixtures) && $(CURDIR)/../gsr
+	@cd $(fixtures) && $(CURDIR)/../git-outline.sh
 
 run-fetch:
-	@cd $(fixtures) && $(CURDIR)/../gsr --fetch
+	@cd $(fixtures) && $(CURDIR)/../git-outline.sh --fetch
