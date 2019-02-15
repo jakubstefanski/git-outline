@@ -4,8 +4,9 @@ include common.mk
 
 testcases := \
 	dirty \
+	empty \
 	loose \
-	remote-sync
+	sync
 
 .PHONY: all clean run run-fetch $(testcases)
 
@@ -17,8 +18,8 @@ all: $(testcases)
 $(testcases):
 	@$(MAKE) --no-print-directory -f "test-$@.mk"
 
-run:
-	@cd $(fixtures) && $(CURDIR)/../git-outline.sh
+run: $(fixtures_local)
+	@cd $(fixtures_local) && $(root)/git-outline.sh
 
-run-fetch:
-	@cd $(fixtures) && $(CURDIR)/../git-outline.sh --fetch
+run-fetch: $(fixtures_local)
+	@cd $(fixtures_local) && $(root)/git-outline.sh --fetch

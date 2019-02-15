@@ -1,9 +1,8 @@
-fixtures := fixtures
-fixtures_local := $(fixtures)/local
-fixtures_remote := $(fixtures)/remote
+root := $(CURDIR)/..
+fixtures_local := fixtures/local
+fixtures_remote := fixtures/remote
 
-$(fixtures_local):
-$(fixtures_remote):
+$(fixtures_local) $(fixtures_remote):
 	@mkdir -p "$@"
 
 $(fixtures_remote)/%: $(fixtures_remote)
