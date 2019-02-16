@@ -79,23 +79,23 @@ function check_status() {
 		porcelain+=("${SIGN_LOOSE}")
 	fi
 
-	if ! git rev-parse --quiet --verify HEAD &>/dev/null; then
-		# Empty repository (no commits)
+	# Empty or dirty repository
+	if ! git rev-parse --quiet --verify HEAD >/dev/null; then
 		porcelain+=("${SIGN_EMPTY}")
-	else
-		# Dirty repository
-		if ! git diff-files --quiet --ignore-submodules || ! git diff-index --quiet --cached HEAD --ignore-submodules; then
+		if ! git diff --quiet --ignore-submodules --cached; then
 			porcelain+=("${SIGN_DIRTY}")
 		fi
+	elif ! git diff --quiet --ignore-submodules HEAD; then
+		porcelain+=("${SIGN_DIRTY}")
+	fi
 
-		# Remote ahead/behind
-		if [[ "${remote_branch}" ]]; then
-			if [ "$(git rev-list "${remote_branch}..${local_branch}" --count)" -gt '0' ]; then
-				porcelain+=("${SIGN_AHEAD}")
-			fi
-			if [ "$(git rev-list "${local_branch}..${remote_branch}" --count)" -gt '0' ]; then
-				porcelain+=("${SIGN_BEHIND}")
-			fi
+	# Remote ahead/behind
+	if [[ "${remote_branch}" ]]; then
+		if [ "$(git rev-list "${remote_branch}..${local_branch}" --count)" -gt '0' ]; then
+			porcelain+=("${SIGN_AHEAD}")
+		fi
+		if [ "$(git rev-list "${local_branch}..${remote_branch}" --count)" -gt '0' ]; then
+			porcelain+=("${SIGN_BEHIND}")
 		fi
 	fi
 
