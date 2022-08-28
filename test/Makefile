@@ -19,7 +19,7 @@ $(testcases):
 	@$(MAKE) --no-print-directory -f "test-$@.mk"
 
 run: $(fixtures_local)
-	@cd $(fixtures_local) && $(root)/git-outline.sh
+	@cd $(fixtures_local) && $(root)/git-outline
 
 run-fetch: $(fixtures_local)
-	@cd $(fixtures_local) && $(root)/git-outline.sh --fetch
+	@cd $(fixtures_local) && $(root)/git-outline --fetch
