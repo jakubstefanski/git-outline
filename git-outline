@@ -9,7 +9,6 @@ set -eu
 
 # Constants
 readonly SIGN_NONE=' '
-readonly SIGN_LOOSE='L'
 readonly SIGN_DIRTY='D'
 readonly SIGN_REMOTE_UNAVAILABLE='U'
 readonly SIGN_BEHIND='B'
@@ -72,11 +71,6 @@ function check_status() {
 		if ! git fetch --quiet &>/dev/null; then
 			porcelain+=("${SIGN_REMOTE_UNAVAILABLE}")
 		fi
-	fi
-
-	# Loose repositories
-	if [[ ! $(git remote 2>/dev/null) ]]; then
-		porcelain+=("${SIGN_LOOSE}")
 	fi
 
 	# Empty or dirty repository
